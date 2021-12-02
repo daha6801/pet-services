@@ -1,21 +1,18 @@
-const Model = Sequelize.Model;
-class User extends Model {}
-User.init({
-        username: {
-          type: Sequelize.STRING
-        },
-        email: {
-            type: Sequelize.STRING
-          },
-        password: {
-          type: Sequelize.STRING
-        }
-},
-        {
-          sequelize,
-          modelName: 'user'
-          // options
-        });
+
+module.exports = (sequelize, Sequelize) => {
+  var User = sequelize.define("user", {
+    username: {
+      type: Sequelize.STRING
+    },
+    email: {
+        type: Sequelize.STRING
+    },
+    password: {
+      type: Sequelize.STRING
+    }
+  });
+  return User;
+};
 
     
 

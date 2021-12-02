@@ -20,7 +20,7 @@ var usersRouter = require('./routes/users');
 var aboutRouter = require('./routes/about');
 var featuredRouter = require('./routes/featured');
 var contactUsRouter = require('./routes/contactus');
-var user = require('./models/users');
+//var user = require('./models/users');
 
 var app = express();
 var server = http.createServer(app);
@@ -30,9 +30,11 @@ server.listen(port,function(){
   console.log("Server running at "+ port);
 });
 
+const db = require('./models');
+db.sequelize.sync();
 
 //Connect to the db
-const dbconfig = require("./config/dbconfig");
+/*const dbconfig = require("./config/dbconfig");
 const Sequelize = require("sequelize");
 const sequelize = new Sequelize(dbconfig.DB, dbconfig.USER, dbconfig.PASSWORD, {
   host: dbconfig.HOST,
@@ -54,27 +56,6 @@ sequelize
   .catch(err => {
     console.error('Unable to connect to the database:', err);
   });
-
-// Connecting to the database using mongooose
-/*
-const url = 'mongodb+srv://user:P@ssw0rd@cluster0.4gkkd.mongodb.net/mysilly-app-database?retryWrites=true&w=majority'
-
-mongoose.connect(url, { 
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false
-  
-});
-
-const db = mongoose.connection;
-db.once('open', _ => {
-  console.log('Database connected:', url)
-});
-
-db.on('error', err => {
-  console.error('connection error:', err)
-});
 */
 const sessionConfig = {
   secret: 'Nullaquisloremutlibro',

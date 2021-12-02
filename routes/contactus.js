@@ -4,7 +4,9 @@ var router = express.Router();
 const passport = require('passport');
 const catchAsync = require('../utils/catchAsync');
 const users = require("../models/users");
-const controllers = require("../controllers/users.controller");
+const db = require("../models/index")
+const User = require("../controllers/users.controller");
+
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -16,26 +18,26 @@ router.get('/signup', (req, res) => {
 });
 
 
-router.post('/signup', catchAsync(async (req, res, next) => {
+/*router.post('/signup', catchAsync(async (req, res, next) => {
   try {
     const {email, username, password} = req.body;
     //const user = new users({email, username, password});
     
     // create user and persist in the database
     //controllers.createUser;
-    // Note: using `force: true` will drop the table if it already exists
-  User.sync({ force: true }).then(() => {
-  // Now the `users` table in the database corresponds to the model definition
-  return User.create({
-    email: 'John',
-    username: 'Hancock',
-    password: 'mypassword'
-   });
- });
-
-    const registeredUser = await users.register(user, password);
-
     
+    // Note: using `force: true` will drop the table if it already exists
+   db.sequelize.sync({ force: true }).then(() => {
+      // Now the `users` table in the database corresponds to the model definition
+      return User.createUser({
+        email: 'John',
+        username: 'Hancock',
+        password: 'mypassword'
+     });
+    });
+
+    const registeredUser = await users.register(User, password);
+   
     req.login(registeredUser, err => {
       if (err) return next(err);
       req.flash('success', 'Welcome!');
@@ -45,7 +47,26 @@ router.post('/signup', catchAsync(async (req, res, next) => {
     req.flash('error', e.message);
     res.redirect('signup');
   }
-}));
+}));*/
+
+router.post('/signup',function(req, res, next) {
+ 
+  try{
+    const {email, username, password} = req.body;
+
+    User.create({
+        email: email,
+        username: username,
+        password: password
+    }, res)
+    .then(res => (res.status.get == 200) && history.push('/'))
+    .catch(err=>console.log(err));
+  } catch (e) {
+      req.flash('error', e.message);
+      res.redirect('signup');
+  }
+  
+});
 
 router.get('/login', (req, res) => {
   res.render('login', {title:'Login page!'});
