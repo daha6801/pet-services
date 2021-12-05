@@ -30,5 +30,8 @@ sequelize
   db.sequelize = sequelize;
   
   db.users = require("./users.js")(sequelize, Sequelize);
+  db.services = require("./services.js")(sequelize, Sequelize);
   
+  sequelize.sync({ alter: true });
+
   module.exports = db;
