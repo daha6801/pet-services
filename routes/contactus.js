@@ -2,76 +2,77 @@ var express = require('express');
 var router = express.Router();
 
 const passport = require('passport');
+var crypto = require('crypto');
 const catchAsync = require('../utils/catchAsync');
-const users = require("../models/users");
-const db = require("../models/index")
-const User = require("../controllers/users.controller");
-
+const db = require('../models');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('contactus', { title: 'Contact Us' });
 });
 
+//handle GET register
 router.get('/signup', (req, res) => {
   res.render('signup', {title:'Signup page!'});
 });
 
+//checks if password has > 8 chars
+function isValidPassword(password) {
+  if (password.length >= 8) {
+    return true;
+  }
+  return false;
+}
 
-/*router.post('/signup', catchAsync(async (req, res, next) => {
+//uses a regex to check if email is valid
+function isValidEmail(email) {
+  var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
+}
+
+//handles register POST
+router.post('/signup', async function(req, res, next) {
+  var salt = crypto.randomBytes(64).toString('hex');
+  var password = crypto.pbkdf2Sync(req.body.password, salt, 10000, 64, 'sha512').toString('base64');
+
+  if (!isValidPassword(req.body.password)) {
+    return res.json({status: 'error', message: 'Password must be 8 or more characters.'});
+  }
+  if (!isValidEmail(req.body.email)) {
+    return res.json({status: 'error', message: 'Email address not formed correctly.'});
+  }
+
   try {
-    const {email, username, password} = req.body;
-    //const user = new users({email, username, password});
-    
-    // create user and persist in the database
-    //controllers.createUser;
-    
-    // Note: using `force: true` will drop the table if it already exists
-   db.sequelize.sync({ force: true }).then(() => {
-      // Now the `users` table in the database corresponds to the model definition
-      return User.createUser({
-        email: 'John',
-        username: 'Hancock',
-        password: 'mypassword'
-     });
+    var user = await db.users.create({
+      email: req.body.email,
+      username: req.body.username,
+      password: req.body.password
     });
-
-    const registeredUser = await users.register(User, password);
-   
-    req.login(registeredUser, err => {
-      if (err) return next(err);
-      req.flash('success', 'Welcome!');
-      res.redirect('/');
-    })
-  } catch (e) {
-    req.flash('error', e.message);
-    res.redirect('signup');
+  } catch (err) {
+    return res.json({status: 'error', message: 'Email address already exists.'});
   }
-}));*/
-
-router.post('/signup',function(req, res, next) {
- 
-  try{
-    const {email, username, password} = req.body;
-
-    User.create({
-        email: email,
-        username: username,
-        password: password
-    }, res)
-    .then(res => (res.status.get == 200) && history.push('/'))
-    .catch(err=>console.log(err));
-  } catch (e) {
-      req.flash('error', e.message);
-      res.redirect('signup');
+  if (user) {
+    passport.authenticate('local', function(err, user, info) {
+      if (err) { return next(err); }
+      if (!user) {
+        return res.json({status: 'error', message: info.message});
+      }
+      req.logIn(user, function(err) {
+        if (err) { return next(err); }
+        req.flash('success', 'Welcome!');
+        res.redirect('/');
+        //return res.json({status: 'ok'});
+      });
+    })(req, res, next);
   }
-  
 });
 
+// handle GET login
 router.get('/login', (req, res) => {
   res.render('login', {title:'Login page!'});
 });
 
+// handle POST login
 router.post('/login', passport.authenticate('local', {failureFlash:true, failureRedirect: 'login'}), (req, res) => {
   req.flash('success', 'welcome back!');
   const redirectUrl = req.session.returnTo || '/';

@@ -8,12 +8,12 @@ const http = require('http');
 const hostname = '127.0.0.1';
 const port = 3000;
 //const cors = require("cors");
-
-const mongoose = require('mongoose');
+var crypto = require('crypto');
+//const mongoose = require('mongoose');
 const session = require('express-session');
 const flash = require('connect-flash');
 const passport = require('passport');
-const LocalStrategy = require('passport-local');
+const LocalStrategy = require('passport-local').Strategy;
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -32,31 +32,8 @@ server.listen(port,function(){
 
 const db = require('./models');
 db.sequelize.sync();
+var user = db.users;
 
-//Connect to the db
-/*const dbconfig = require("./config/dbconfig");
-const Sequelize = require("sequelize");
-const sequelize = new Sequelize(dbconfig.DB, dbconfig.USER, dbconfig.PASSWORD, {
-  host: dbconfig.HOST,
-  dialect: dbconfig.dialect,
-  port: dbconfig.port,
-  pool: {
-    max: dbconfig.pool.max,
-    min: dbconfig.pool.min,
-    acquire: dbconfig.pool.acquire,
-    idle: dbconfig.pool.idle
-  }
-});
-
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
-*/
 const sessionConfig = {
   secret: 'Nullaquisloremutlibro',
   resave: false,
@@ -74,8 +51,35 @@ app.use(passport.initialize());
 app.use(passport.session());
 //passport.use(new LocalStrategy(user.authenticate()));
 
-//passport.serializeUser(user.serializeUser());
-//passport.deserializeUser(user.deserializeUser());
+/*passport.use(new LocalStrategy({
+  email: 'email',
+  password: 'password'
+},
+async function(email, password, done) {
+  var user = await db.users.findOne(
+    { where: {
+        email: email
+      }
+    });
+  if (user == null) {
+    return done(null, false, { message: 'Incorrect email.' });
+  }
+  if (!user.validPassword(password)) {
+    return done(null, false, { message: 'Incorrect password.' });
+  }
+  return done(null, user);
+}
+));*/
+
+//serialize user
+passport.serializeUser(function(user, done) {
+  done(null, {email: user.email});
+});
+
+//deserialize user
+passport.deserializeUser(function(user, done) {
+  done(null,{email: user.email});
+});
 
 app.use((req, res, next) => {
     console.log(req.session);
@@ -84,7 +88,6 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');
     next();
 });
-
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
