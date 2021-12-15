@@ -57,6 +57,7 @@ router.post('/signup', async function(req, res, next) {
       if (!user) {
         return res.json({status: 'error', message: info.message});
       }
+      req.session.context = 'authenticatedUser' ;
       req.logIn(user, function(err) {
         if (err) { return next(err); }
         req.flash('success', 'Welcome!');
@@ -75,12 +76,14 @@ router.get('/login', (req, res) => {
 // handle POST login
 router.post('/login', passport.authenticate('local', {failureFlash:true, failureRedirect: 'login'}), (req, res) => {
   req.flash('success', 'welcome back!');
+  req.session.context = 'authenticatedUser' ;
   const redirectUrl = req.session.returnTo || '/';
   delete req.session.returnTo;
   res.redirect(redirectUrl);
 });
 
 router.get('/logout', (req, res) => {
+    delete req.session.context;
     req.logout();
     req.flash('success', "Goodbye!");
     res.redirect('/');

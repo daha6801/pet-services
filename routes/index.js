@@ -15,7 +15,8 @@ router.get('/', async function(req, res, next) {
       return db.services.findAll();
     }).then(function(data) {
       console.log(data);
-      res.render('index', { title: 'Express', userData: data});
+      var context = req.session.context;
+      res.render('index', { title: 'Express', userData: data, context });
     });
   }catch (err){
     return res.json({status: 'error', message: err.message});
